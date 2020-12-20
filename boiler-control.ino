@@ -84,7 +84,7 @@ float measurements[mCount];
 // ============================================================================
 
 //####################### METHOD FORWARD DECLARATION #############################
-void drawDateTime();
+void drawDateTime(DateTime now);
 void printTimeToSerial();
 void testdrawtext(char *text, uint16_t color);
 void detectTempSensors();
@@ -98,8 +98,7 @@ uint16_t getColor(int boiler);
 void evaluateHeating();
 boolean isErrorTemperature(float temperature);
 int scmp(const char *X, const char *Y);
-void calculateWaterLevel();
-
+void calculateWaterLevel(DateTime now, Adafruit_ST7735 tft);
 void setup(void) {
 	sensors.begin();  // Start up the library
 	sensors.getAddress(BOILER1_I2C_ADDRESS, BOILER1_I2C_INDEX);
@@ -180,8 +179,9 @@ void loop() {
 	evaluateValve(boiler1Temperature, boiler2Temperature);
 	activateBoiler();
 	evaluateHeating();
-	drawDateTime();
-	calculateWaterLevel();
+  DateTime now = rtc.now();
+	drawDateTime(now);
+	calculateWaterLevel(now, tft);
 
 	// printTimeToSerial();
 
@@ -198,7 +198,7 @@ void loop() {
 	Serial.print("mem = ");
 	Serial.println(freeMemory());
 
-	drawProgressIndicator(tft);
+	// drawProgressIndicator(tft);
 
 	long end = micros();
 	long duration = end - start;
@@ -257,13 +257,12 @@ void printTimeToSerial() {
 	Serial.println("----------------------------------");
 }
 
-void drawDateTime() {
+void drawDateTime(DateTime now) {
 	char resultTime[30];
 	char resultDate[30];
 	int16_t x, y;
 	uint16_t w, h;
 
-	DateTime now = rtc.now();
 	char *dayName = indexToDay(now.dayOfTheWeek());
 
 	tft.setCursor(DATE_TIME_X, DATE_TIME_Y);
@@ -474,7 +473,7 @@ void activateBoiler() {
 		// Serial.print("Setting boiler pin to HIGH - ");
 		digitalWrite(boilerToActivate, HIGH);
 	}
-	Serial.println(boilerToActivate);
+	// Serial.println(boilerToActivate);
 }
 
 char* indexToDay(uint8_t index) {
@@ -518,7 +517,7 @@ void evaluateHeating() {
 
 
 
-void calculateWaterLevel() {
+void calculateWaterLevel(DateTime now, Adafruit_ST7735 tft) {
 	int digitalInput = analogRead(A_IN_PIN);
 
 	int position = currentMeasurement++ % mCount;
@@ -531,6 +530,8 @@ void calculateWaterLevel() {
 	int average = sum / mCount;
 
 	drawWaterLevel(4, average, 0, 112, ST77XX_CYAN);
+
+  updateAverage(now, digitalInput, tft);
 }
 
 void drawWaterLevel(int i2c_index, int digitalInput, int positionX, int positionY, uint16_t color) {
