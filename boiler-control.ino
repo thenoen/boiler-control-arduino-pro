@@ -30,7 +30,7 @@ int DATE_TIME_X = 1;
 int DATE_TIME_Y = 12;
 
 int T1_POSITION_X = 1;
-int T1_POSITION_Y = 55;
+int T1_POSITION_Y = 30;
 int T2_POSITION_X = 1;
 int T2_POSITION_Y = T1_POSITION_Y + 20;
 int T3_POSITION_X = 1;
@@ -99,6 +99,7 @@ void evaluateHeating();
 boolean isErrorTemperature(float temperature);
 int scmp(const char *X, const char *Y);
 void calculateWaterLevel(DateTime now, Adafruit_ST7735 tft);
+
 void setup(void) {
 	sensors.begin();  // Start up the library
 	sensors.getAddress(BOILER1_I2C_ADDRESS, BOILER1_I2C_INDEX);
@@ -117,7 +118,7 @@ void setup(void) {
 
 	tft.setRotation(1);
 	tft.fillScreen(ST77XX_BLACK);
-	tft.drawFastHLine(0, 39, 160, COLOR_GRAY);
+	tft.drawFastHLine(0, 15, 160, COLOR_GRAY);
 
 	int b = rtc.begin();
 
@@ -258,14 +259,13 @@ void printTimeToSerial() {
 }
 
 void drawDateTime(DateTime now) {
-	char resultTime[30];
-	char resultDate[30];
-	int16_t x, y;
-	uint16_t w, h;
+	char resultText[11];
+	int16_t x = 0, y = 0;
+	uint16_t w = 0, h = 0;
 
 	char *dayName = indexToDay(now.dayOfTheWeek());
 
-	tft.setCursor(DATE_TIME_X, DATE_TIME_Y);
+	// tft.setCursor(DATE_TIME_X, DATE_TIME_Y);
 	tft.setTextColor(ST77XX_WHITE);
 
 	//----------------------------
@@ -279,21 +279,28 @@ void drawDateTime(DateTime now) {
 //	tft.print(result);
 	//----------------------------
 
-	sprintf(resultTime, "%s %02d:%02d:%02d", dayName, now.hour(), now.minute(), now.second());
-	if (strcmp(previousText[PREV_TIME], resultTime) != 0) {
-		strcpy(previousText[PREV_TIME], resultTime);
-		tft.getTextBounds(resultTime, DATE_TIME_X, DATE_TIME_Y, &x, &y, &w, &h);
-		w += 2; // a bug, rectangle of text may not be calculated correctly
+	sprintf(resultText, "%s %02d.%02d.", dayName, now.day(), now.month());
+	if (strcmp(previousText[PREV_TIME], resultText) != 0) {
+	  tft.setCursor(DATE_TIME_X, DATE_TIME_Y);
+		strcpy(previousText[PREV_TIME], resultText);
+		tft.getTextBounds(resultText, DATE_TIME_X, DATE_TIME_Y, &x, &y, &w, &h);
+    w += 2; // a bug, rectangle of text may not be calculated correctly
 		tft.fillRect(x - 1, y - 1, w, h + 1, ST77XX_BLACK); // "-1" is for fixing of calculation of text rectangle
-		tft.println(resultTime);
-	}
+		tft.println(resultText);
+	} else {
+		tft.getTextBounds(previousText[PREV_TIME], DATE_TIME_X, DATE_TIME_Y, &x, &y, &w, &h);
+    w += 2; // a bug, rectangle of text may not be calculated correctly    
+  }
+	
 
-	sprintf(resultDate, "%02d.%02d.%02d", now.day(), now.month(), now.year());
-	if (strcmp(previousText[PREV_DATE], resultDate) != 0) {
-		strcpy(previousText[PREV_DATE], resultDate);
-		tft.getTextBounds(resultDate, DATE_TIME_X + w, DATE_TIME_Y + h, &x, &y, &w, &h);
-		tft.fillRect(x - 1, y, w, h, ST77XX_BLACK); // "-1" is for fixing of calculation of text rectangle
-		tft.print(resultDate);
+	sprintf(resultText, " / %02d:%02d", now.hour(), now.minute());
+	// sprintf(resultText, " - %02d.%02d.", now.second(), now.second());
+	if (strcmp(previousText[PREV_DATE], resultText) != 0) {
+	  tft.setCursor(DATE_TIME_X + w, DATE_TIME_Y);
+    strcpy(previousText[PREV_DATE], resultText);
+		tft.getTextBounds(resultText, DATE_TIME_X + w, DATE_TIME_Y, &x, &y, &w, &h); //todo: why +w ???
+		tft.fillRect(x - 1, y, w + 1, h, ST77XX_BLACK); // "-1" is for fixing of calculation of text rectangle
+		tft.print(resultText);
 	}
 
 }
@@ -529,7 +536,7 @@ void calculateWaterLevel(DateTime now, Adafruit_ST7735 tft) {
 	}
 	int average = sum / mCount;
 
-	drawWaterLevel(4, average, 0, 112, ST77XX_CYAN);
+	drawWaterLevel(4, average, 0, 90, ST77XX_CYAN);
 
   updateAverage(now, digitalInput, tft);
 }
