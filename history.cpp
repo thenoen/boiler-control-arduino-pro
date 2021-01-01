@@ -1,21 +1,23 @@
 #include "history.h"
 
-const int n = 60;
+const int n = 64;
 int history_data[n] = {};
-float current_average = 0.0;
+float current_average= 0.0;
 int measurements_count = 0;
 uint32_t shiftInstant = 0;
 
 // ====== Drawing parameters ======
-const int BASE = 100;
-// const int min = 140;
-// const int max = 160;
+const int BASE = 78;
+const int SHIFT = 62;
+const int min = 140;
+const int max = 165;
+const int step = 10;
 // ================================
 
 void updateAverage(DateTime now, int newVal, Adafruit_ST7735 tft) {
 
   uint32_t secondsNow = now.secondstime();
-  uint32_t modSeconds = secondsNow % 60;
+  uint32_t modSeconds = secondsNow % (3600 * 6);
   uint32_t newInstant = secondsNow - modSeconds;
  
   if (shiftInstant == 0 || shiftInstant != newInstant) {
@@ -48,21 +50,47 @@ void printHistory() {
   Serial.println();
 }
 
+int measurementToPosition(int measurement) {
+  int position = (BASE - measurement + SHIFT) * 2 + 127;
+  // Serial.println(position);
+  return position;
+}
+
+int positionToMeasurement(int p) {
+  int m = ((p-127)/2-BASE-SHIFT) * -1;
+  // Serial.println(m);
+  return m;
+}
+
 void drawHistory(Adafruit_ST7735 tft) {
-  tft.fillRect(0, BASE, 160, 128 - BASE, ST7735_BLACK);
+  tft.fillRect(0, BASE, 160, 127 - BASE, ST7735_BLACK);
   drawChart(tft);
-  for(int i=0; i<n; i++) {
-    tft.fillRect(1+i*2, BASE + (history_data[i] - 145), 2, 2, ST7735_RED);
-    // tft.fillRect(i*2, i*3, 20, 20, ST7735_BLUE);
+  for (int i=n; i>=0; i--) {
+    int position = measurementToPosition(history_data[i]);
+    if (position>=BASE) {
+      tft.fillRect(1+i*2, position, 2, 2, ST7735_GREEN);
+    }
   }
 }
 
 
+#define COLOR_GRAY	0x83EF
 void drawChart(Adafruit_ST7735 tft) {
-  for(int i=BASE; i<=128; i+=5) {
-    tft.drawFastHLine(0, i, 120, ST7735_WHITE);
+  // Y-axis
+  for(int i=measurementToPosition(max); i<=measurementToPosition(min); i+=step) {
+    if (positionToMeasurement(i) % 10 == 0) {
+      tft.drawFastHLine(0, i, 134, ST7735_WHITE);
+      tft.setCursor(135, i);
+      tft.print(positionToMeasurement(i));
+      Serial.print("a");
+    } else {
+      Serial.print("b");
+      tft.drawFastHLine(0, i, 131, COLOR_GRAY);
+    }
   }
-  for(int i=20; i<=125; i+=20) {
-    tft.drawFastVLine(i, BASE, 128 - BASE, ST7735_WHITE);
+
+  // X-axis  
+  for(int i=128; i>=0; i-=8) {
+    tft.drawFastVLine(i, BASE, 127 - BASE, COLOR_GRAY);
   }
 }

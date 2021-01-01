@@ -30,11 +30,11 @@ int DATE_TIME_X = 1;
 int DATE_TIME_Y = 12;
 
 int T1_POSITION_X = 1;
-int T1_POSITION_Y = 30;
+int T1_POSITION_Y = 28;
 int T2_POSITION_X = 1;
-int T2_POSITION_Y = T1_POSITION_Y + 20;
+int T2_POSITION_Y = T1_POSITION_Y + 15;
 int T3_POSITION_X = 1;
-int T3_POSITION_Y = T2_POSITION_Y + 20;
+int T3_POSITION_Y = T2_POSITION_Y + 15;
 
 int BOILER1_I2C_INDEX = 1;
 int BOILER2_I2C_INDEX = 0;
@@ -61,10 +61,7 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 int deviceCount = 0;
 
-char previousTime[30];
-char previousDate[30];
-
-char previousText[6][30];
+char previousText[3][30];
 int PREV_TIME = 1;
 int PREV_DATE = 2;
 
@@ -196,8 +193,8 @@ void loop() {
 
 	toggleProgressIndicator(tft);
 
-	Serial.print("mem = ");
-	Serial.println(freeMemory());
+	// Serial.print("mem = ");
+	// Serial.println(freeMemory());
 
 	// drawProgressIndicator(tft);
 
@@ -536,7 +533,7 @@ void calculateWaterLevel(DateTime now, Adafruit_ST7735 tft) {
 	}
 	int average = sum / mCount;
 
-	drawWaterLevel(4, average, 0, 90, ST77XX_CYAN);
+	drawWaterLevel(4, average, 0, 71, ST77XX_CYAN);
 
   updateAverage(now, digitalInput, tft);
 }
